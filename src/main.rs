@@ -32,6 +32,7 @@ fn main() -> Result<()> {
     let brightness = backlight.join("brightness");
     let max_brightness = read_to_string(max_brightness)?;
     let max_brightness_value = max_brightness.trim().parse().unwrap();
+    let min_brightness_value = 0;
     let args: Vec<String> = std::env::args().collect();
     let target: u16 = if args.len() > 1 {
         let input = &args[1];
@@ -47,10 +48,17 @@ fn main() -> Result<()> {
         let current_value: u16 = read_to_string(&brightness)?.trim().parse().unwrap();
         match signum {
             Some(positive) => {
-                if positive {
+                let new_value = if positive {
                     current_value + value
                 } else {
                     current_value - value
+                };
+                if new_value >= max_brightness_value {
+                    max_brightness_value
+                } else if new_value <= min_brightness_value {
+                    min_brightness_value
+                } else {
+                    new_value
                 }
             }
             None => value,
@@ -58,6 +66,8 @@ fn main() -> Result<()> {
     } else {
         max_brightness_value
     };
+    dbg!(&max_brightness_value);
+    dbg!(&target);
     let current_brightness_value: u16 = read_to_string(&brightness)?.trim().parse().unwrap();
     if target > current_brightness_value {
         for b in current_brightness_value..=target {
